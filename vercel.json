@@ -1,0 +1,10 @@
+{
+    "buildCommand": "pnpm install --frozen-lockfile && pnpm run vercel-build",
+    "outputDirectory": ".",
+    "rewrites": [
+        {
+            "source": "/admin.html",
+            "destination": "/admin-dist/admin.html"
+        }
+    ]
+}

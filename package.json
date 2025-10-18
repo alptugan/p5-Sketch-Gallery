@@ -11,7 +11,9 @@
         "dev:admin": "vite",
         "start": "node server.js",
         "postinstall": "node -e \"try{require('fs').mkdirSync('data',{recursive:true})}catch(e){}\"",
-        "build:admin": "vite build"
+        "build:admin": "vite build",
+        "build:config": "node scripts/generate-config.mjs",
+        "vercel-build": "pnpm run build:admin && pnpm run build:config"
     },
     "dependencies": {
         "cors": "^2.8.5",
