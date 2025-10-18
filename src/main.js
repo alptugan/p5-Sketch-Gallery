@@ -59,23 +59,7 @@ class AppRoot extends HTMLElement {
         }
 
         // find the sketch by slug and render it
-        const sketch = sketches.find((s) => s.slug === slug) ?? sketches[0];
-
-        // handle hash "routes"
-        const rawHash = window.location.hash.substring(1);
-        let sketchId = rawHash ? decodeURIComponent(rawHash) : "";
-        if (sketchId === "") {
-            let randomIndex = Math.floor(Math.random() * Config.sketches.length);
-            window.location.hash = encodeURIComponent(Config.sketches[randomIndex].slug); // default
-        }
-        const sketchInfo = Config.sketches.find((s) => s.slug === sketchId);
-
-        // Fallback if slug not found (e.g., encoded unicode differences)
-        if (!sketchInfo) {
-            const fallback = Config.sketches[0];
-            window.location.hash = encodeURIComponent(fallback.slug);
-            return;
-        }
+        const sketchInfo = sketches.find((s) => s.slug === slug) ?? sketches[0];
 
         // Ensure p5.js links use the "full" view instead of the editor
         function normalizeP5Url(rawUrl) {
@@ -140,11 +124,13 @@ class AppRoot extends HTMLElement {
         }
 
         // build nave
-        let sketchesMenu = Config.sketches
+        let sketchesMenu = sketches
             .map((s) => {
                 return /*html*/ `
         <li>
-          <a class="${s.slug === sketchId ? "active" : ""}" href="#${encodeURIComponent(s.slug)}">${s.title}</a>
+                    <a class="${s.slug === sketchInfo.slug ? "active" : ""}" href="#${encodeURIComponent(s.slug)}">${
+                    s.title
+                }</a>
           by ${s.author}
         </li>
       `;
@@ -225,6 +211,6 @@ class AppRoot extends HTMLElement {
         });
     }
 }
-customElements.define("app-root", AppRoot);
+customElements.define("custom-app", AppRoot);
 
 export default AppRoot;
