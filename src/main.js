@@ -2,15 +2,43 @@
 // import "./reset.css";
 // import "./styles.css";
 
-import Config from "./config.js";
+import config from "./config.js";
+const sketches = Array.isArray(config?.sketches) ? config.sketches : [];
 
-class App extends HTMLElement {
+function getSlugFromHash() {
+    return decodeURIComponent(location.hash.replace(/^#/, "") || "");
+}
+
+function setHashIfValid(slug) {
+    if (slug) history.replaceState(null, "", `#${encodeURIComponent(slug)}`);
+}
+
+function getDefaultSlug() {
+    return sketches[0]?.slug || null;
+}
+
+class AppRoot extends HTMLElement {
     connectedCallback() {
-        requestAnimationFrame(() => this.render()); // solves circular import race condition
-        addEventListener("hashchange", (event) => window.location.reload());
-    }
+        let slug = getSlugFromHash();
 
-    disconnectedCallback() {}
+        // If missing or not found, use default without writing "#undefined"
+        if (!slug || !sketches.some((s) => s.slug === slug)) {
+            slug = getDefaultSlug();
+            setHashIfValid(slug);
+        }
+
+        this.render(slug);
+        window.addEventListener("hashchange", () => {
+            const next = getSlugFromHash();
+            if (next && sketches.some((s) => s.slug === next)) {
+                this.render(next);
+            } else {
+                const fallback = getDefaultSlug();
+                setHashIfValid(fallback);
+                this.render(fallback);
+            }
+        });
+    }
 
     css() {
         return /*css*/ `
@@ -23,7 +51,16 @@ class App extends HTMLElement {
     `;
     }
 
-    render() {
+    render(slug) {
+        // If still no data, show empty state instead of crashing
+        if (!sketches.length) {
+            this.innerHTML = `<p>No sketches available.</p>`;
+            return;
+        }
+
+        // find the sketch by slug and render it
+        const sketch = sketches.find((s) => s.slug === slug) ?? sketches[0];
+
         // handle hash "routes"
         const rawHash = window.location.hash.substring(1);
         let sketchId = rawHash ? decodeURIComponent(rawHash) : "";
@@ -188,7 +225,6 @@ class App extends HTMLElement {
         });
     }
 }
+customElements.define("app-root", AppRoot);
 
-customElements.define("custom-app", App);
-
-export default App;
+export default AppRoot;
