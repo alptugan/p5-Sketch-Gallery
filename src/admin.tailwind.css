@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ensure admin page can scroll even if a global reset sets overflow:hidden */
+@layer base {
+    html,
+    body {
+        overflow-y: auto !important;
+        height: auto;
+    }
+}

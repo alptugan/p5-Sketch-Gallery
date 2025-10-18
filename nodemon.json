@@ -1,0 +1,17 @@
+{
+    "watch": [
+        "server.js",
+        "data"
+    ],
+    "ignore": [
+        "admin-dist/**",
+        "src/**",
+        "public-admin.js",
+        "public-admin.js.map",
+        "admin.html",
+        "vite.config.js",
+        "tailwind.config.js",
+        "postcss.config.js"
+    ],
+    "ext": "js,json"
+}

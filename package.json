@@ -1,0 +1,35 @@
+{
+    "name": "creative-coding-class-showcase",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "packageManager": "pnpm@9.12.0",
+    "scripts": {
+        "preinstall": "node -e \"if(!process.env.npm_execpath||!process.env.npm_execpath.includes('pnpm')){console.error('This repo uses pnpm. Please run: corepack enable && pnpm install');process.exit(1)}\"",
+        "dev": "concurrently -k \"pnpm dev:server\" \"pnpm dev:admin\"",
+        "dev:server": "nodemon --config nodemon.json server.js",
+        "dev:admin": "vite",
+        "start": "node server.js",
+        "postinstall": "node -e \"try{require('fs').mkdirSync('data',{recursive:true})}catch(e){}\"",
+        "build:admin": "vite build"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "express": "^4.19.2",
+        "@headlessui/react": "^2.2.9",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "express-rate-limit": "^6.11.2",
+        "dotenv": "^16.4.5"
+    },
+    "devDependencies": {
+        "tailwindcss": "^3.4.14",
+        "esbuild": "^0.23.1",
+        "vite": "^5.4.8",
+        "@vitejs/plugin-react": "^4.3.1",
+        "postcss": "^8.4.47",
+        "autoprefixer": "^10.4.20",
+        "concurrently": "^9.0.1",
+        "nodemon": "^3.1.7"
+    }
+}
