@@ -1,9 +1,15 @@
 {
     "name": "creative-coding-class-showcase",
+    "description": "Gallery for p5.js sketches built with vanilla JS and web components. Includes admin panel to manage sketches from p5 editor or OpenProcessing.",
     "version": "1.0.0",
     "private": true,
     "type": "module",
     "packageManager": "pnpm@9.12.0",
+    "author": {
+        "name": "Alp Tuğan",
+        "email": "alp.tugan@ozyegin.edu.tr",
+        "url": "https://alptugan.com"
+    },
     "scripts": {
         "preinstall": "node -e \"if(!process.env.npm_execpath||!process.env.npm_execpath.includes('pnpm')){console.error('This repo uses pnpm. Please run: corepack enable && pnpm install');process.exit(1)}\"",
         "dev": "concurrently -k \"pnpm dev:server\" \"pnpm dev:admin\"",
@@ -13,8 +19,7 @@
         "postinstall": "node -e \"try{require('fs').mkdirSync('data',{recursive:true})}catch(e){}\"",
         "build": "pnpm run build:admin && pnpm run build:config",
         "build:admin": "vite build",
-        "build:config": "node scripts/generate-config.mjs",
-        "vercel-build": "pnpm run build:admin && pnpm run build:config"
+        "build:config": "node scripts/generate-config.mjs"
     },
     "dependencies": {
         "cors": "^2.8.5",

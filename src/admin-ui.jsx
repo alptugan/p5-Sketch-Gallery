@@ -3,10 +3,19 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Dialog, Transition } from "@headlessui/react";
 
+// Constants
+const DEFAULT_SKETCH_DIMENSIONS = { width: 800, height: 800 };
+const URL_VALIDATION_REGEX = /(p5js|openprocessing)/i;
+
 async function api(path, init) {
     const res = await fetch(path, init);
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
     return res.json();
+}
+
+// Helper function to get default week from folders
+function getDefaultWeek(folders) {
+    return folders.find((f) => f.isDefault)?.id || folders[0]?.id || "week1";
 }
 
 function useSketches() {
@@ -30,6 +39,29 @@ function useSketches() {
     }, []);
     return { items, loading, error, refresh, setItems };
 }
+
+function useFolders() {
+    const [folders, setFolders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    async function load() {
+        setLoading(true);
+        setError("");
+        try {
+            const data = await api("/api/folders");
+            setFolders(data);
+        } catch (e) {
+            setError(e.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+    useEffect(() => {
+        load();
+    }, []);
+    return { folders, loading, error };
+}
+
 async function updateSketch(slug, payload) {
     const res = await fetch(`/api/sketches/${encodeURIComponent(slug)}` ,{
         method: "PATCH",
@@ -40,20 +72,107 @@ async function updateSketch(slug, payload) {
     return res.json();
 }
 
+// Shared form fields component for sketch dialogs
+function SketchFormFields({ form, setForm, folders, urlWarning }) {
+    const defaultWeek = getDefaultWeek(folders);
+
+    return (
+        <>
+            <label className="col-span-1 text-sm">
+                Author
+                <input
+                    className="mt-1 w-full rounded border px-2 py-1"
+                    value={form.author}
+                    onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
+                    required
+                />
+            </label>
+            <label className="col-span-1 text-sm">
+                Title
+                <input
+                    className="mt-1 w-full rounded border px-2 py-1"
+                    value={form.title}
+                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                    required
+                />
+            </label>
+            <label className="col-span-2 text-sm">
+                Description
+                <textarea
+                    className="mt-1 w-full rounded border px-2 py-1"
+                    rows="3"
+                    value={form.description}
+                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                />
+            </label>
+            <label className="col-span-2 text-sm">
+                URL
+                <input
+                    type="url"
+                    className="mt-1 w-full rounded border px-2 py-1"
+                    value={form.url}
+                    onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
+                    required
+                />
+                {urlWarning && <div className="mt-1 text-xs text-amber-700">{urlWarning}</div>}
+            </label>
+            <label className="col-span-2 text-sm">
+                Week
+                <select
+                    className="mt-1 w-full rounded border px-2 py-1.5 bg-white"
+                    value={form.week || defaultWeek}
+                    onChange={(e) => setForm((f) => ({ ...f, week: e.target.value }))}
+                    required
+                >
+                    {folders.map((folder) => (
+                        <option key={folder.id} value={folder.id}>
+                            {folder.name}
+                        </option>
+                    ))}
+                </select>
+            </label>
+            <label className="col-span-1 text-sm">
+                Width
+                <input
+                    type="number"
+                    min="1"
+                    className="mt-1 w-full rounded border px-2 py-1"
+                    value={form.width}
+                    onChange={(e) => setForm((f) => ({ ...f, width: e.target.value }))}
+                    required
+                />
+            </label>
+            <label className="col-span-1 text-sm">
+                Height
+                <input
+                    type="number"
+                    min="1"
+                    className="mt-1 w-full rounded border px-2 py-1"
+                    value={form.height}
+                    onChange={(e) => setForm((f) => ({ ...f, height: e.target.value }))}
+                    required
+                />
+            </label>
+        </>
+    );
+}
+
 function EditSketchDialog({ open, onClose, sketch, onSaved }) {
+    const { folders } = useFolders();
+    const defaultWeek = getDefaultWeek(folders);
     const [form, setForm] = useState(
-        () => sketch || { author: "", title: "", description: "", url: "", width: 600, height: 600 }
+        () => sketch || { author: "", title: "", description: "", url: "", ...DEFAULT_SKETCH_DIMENSIONS, week: defaultWeek }
     );
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState("");
     const urlWarning =
-        form.url && !/(p5js|openprocessing)/i.test(form.url)
+        form.url && !URL_VALIDATION_REGEX.test(form.url)
             ? "The URL doesn't look like a p5.js or OpenProcessing link. Please double-check."
             : "";
 
     // keep form in sync when sketch changes
     useEffect(() => {
-        setForm(sketch || { author: "", title: "", description: "", url: "", width: 600, height: 600 });
+        setForm(sketch || { author: "", title: "", description: "", url: "", ...DEFAULT_SKETCH_DIMENSIONS });
     }, [sketch]);
 
     async function submit(e) {
@@ -80,66 +199,7 @@ function EditSketchDialog({ open, onClose, sketch, onSaved }) {
                     <Dialog.Panel className="w-full max-w-xl rounded bg-white p-6 shadow-xl">
                         <Dialog.Title className="text-lg font-semibold">Edit Sketch</Dialog.Title>
                         <form className="mt-4 grid grid-cols-2 gap-3" onSubmit={submit}>
-                            <label className="col-span-1 text-sm">
-                                Author
-                                <input
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    value={form.author}
-                                    onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
-                                    required
-                                />
-                            </label>
-                            <label className="col-span-1 text-sm">
-                                Title
-                                <input
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    value={form.title}
-                                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                                    required
-                                />
-                            </label>
-                            <label className="col-span-2 text-sm">
-                                Description
-                                <textarea
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    rows="3"
-                                    value={form.description}
-                                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                                />
-                            </label>
-                            <label className="col-span-2 text-sm">
-                                URL
-                                <input
-                                    type="url"
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    value={form.url}
-                                    onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
-                                    required
-                                />
-                                {urlWarning && <div className="mt-1 text-xs text-amber-700">{urlWarning}</div>}
-                            </label>
-                            <label className="col-span-1 text-sm">
-                                Width
-                                <input
-                                    type="number"
-                                    min="1"
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    value={form.width}
-                                    onChange={(e) => setForm((f) => ({ ...f, width: e.target.value }))}
-                                    required
-                                />
-                            </label>
-                            <label className="col-span-1 text-sm">
-                                Height
-                                <input
-                                    type="number"
-                                    min="1"
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    value={form.height}
-                                    onChange={(e) => setForm((f) => ({ ...f, height: e.target.value }))}
-                                    required
-                                />
-                            </label>
+                            <SketchFormFields form={form} setForm={setForm} folders={folders} urlWarning={urlWarning} />
 
                             {err && <div className="col-span-2 text-sm text-red-600">{err}</div>}
 
@@ -163,14 +223,37 @@ function EditSketchDialog({ open, onClose, sketch, onSaved }) {
     );
 }
 
-function AddSketchDialog({ open, onClose, onAdded }) {
-    const [form, setForm] = useState({ author: "", title: "", description: "", url: "", width: 600, height: 600 });
+function AddSketchDialog({ open, onClose, onAdded, selectedWeek }) {
+    const { folders } = useFolders();
+    const defaultWeek = getDefaultWeek(folders);
+
+    // Use selectedWeek if it's not "all", otherwise use default
+    const initialWeek = selectedWeek && selectedWeek !== "all" ? selectedWeek : defaultWeek;
+
+    const [form, setForm] = useState({
+        author: "",
+        title: "",
+        description: "",
+        url: "",
+        ...DEFAULT_SKETCH_DIMENSIONS,
+        week: initialWeek
+    });
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState("");
+
+    // Update form.week when selectedWeek changes
+    useEffect(() => {
+        if (open) {
+            const weekToUse = selectedWeek && selectedWeek !== "all" ? selectedWeek : defaultWeek;
+            setForm(f => ({ ...f, week: weekToUse }));
+        }
+    }, [open, selectedWeek, defaultWeek]);
+
     const urlWarning =
-        form.url && !/(p5js|openprocessing)/i.test(form.url)
+        form.url && !URL_VALIDATION_REGEX.test(form.url)
             ? "The URL doesn't look like a p5.js or OpenProcessing link. Please double-check."
             : "";
+
     async function submit(e) {
         e?.preventDefault();
         setSaving(true);
@@ -184,82 +267,23 @@ function AddSketchDialog({ open, onClose, onAdded }) {
             });
             onAdded(created);
             onClose();
-            setForm({ author: "", title: "", description: "", url: "", width: 600, height: 600 });
+            setForm({ author: "", title: "", description: "", url: "", ...DEFAULT_SKETCH_DIMENSIONS, week: defaultWeek });
         } catch (e) {
             setErr(e.message);
         } finally {
             setSaving(false);
         }
     }
+
     return (
         <Transition show={open}>
             <Dialog onClose={onClose} className="relative z-50">
-                <div className="fixed inset-0" aria-hidden="true" />
                 <div className="fixed inset-0 bg-black/30" />
                 <div className="fixed inset-0 flex items-center justify-center p-4">
                     <Dialog.Panel className="w-full max-w-xl rounded bg-white p-6 shadow-xl">
                         <Dialog.Title className="text-lg font-semibold">Add Sketch</Dialog.Title>
                         <form className="mt-4 grid grid-cols-2 gap-3" onSubmit={submit}>
-                            <label className="col-span-1 text-sm">
-                                Author
-                                <input
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    value={form.author}
-                                    onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
-                                    required
-                                />
-                            </label>
-                            <label className="col-span-1 text-sm">
-                                Title
-                                <input
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    value={form.title}
-                                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                                    required
-                                />
-                            </label>
-                            <label className="col-span-2 text-sm">
-                                Description
-                                <textarea
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    rows="3"
-                                    value={form.description}
-                                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                                />
-                            </label>
-                            <label className="col-span-2 text-sm">
-                                URL
-                                <input
-                                    type="url"
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    value={form.url}
-                                    onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
-                                    required
-                                />
-                                {urlWarning && <div className="mt-1 text-xs text-amber-700">{urlWarning}</div>}
-                            </label>
-                            <label className="col-span-1 text-sm">
-                                Width
-                                <input
-                                    type="number"
-                                    min="1"
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    value={form.width}
-                                    onChange={(e) => setForm((f) => ({ ...f, width: e.target.value }))}
-                                    required
-                                />
-                            </label>
-                            <label className="col-span-1 text-sm">
-                                Height
-                                <input
-                                    type="number"
-                                    min="1"
-                                    className="mt-1 w-full rounded border px-2 py-1"
-                                    value={form.height}
-                                    onChange={(e) => setForm((f) => ({ ...f, height: e.target.value }))}
-                                    required
-                                />
-                            </label>
+                            <SketchFormFields form={form} setForm={setForm} folders={folders} urlWarning={urlWarning} />
 
                             {err && <div className="col-span-2 text-sm text-red-600">{err}</div>}
 
@@ -309,10 +333,19 @@ function ConfirmDialog({ open, onClose, title, description, confirmText = "Confi
 
 function AdminApp() {
     const { items, loading, error, refresh } = useSketches();
+    const { folders } = useFolders();
     const [addOpen, setAddOpen] = useState(false);
     const [toDelete, setToDelete] = useState(null);
     const [toEdit, setToEdit] = useState(null);
+    const [selectedWeek, setSelectedWeek] = useState("all"); // Filter state
+
+    // Filter items based on selected week
+    const filteredItems = selectedWeek === "all"
+        ? items
+        : items.filter(item => item.week === selectedWeek);
+
     const total = items.length;
+    const filteredTotal = filteredItems.length;
 
     async function handleDelete(slug) {
         await api(`/api/sketches/${encodeURIComponent(slug)}`, { method: "DELETE" });
@@ -325,7 +358,9 @@ function AdminApp() {
             <header className="mb-6 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold">Admin: Sketches</h1>
-                    <p className="text-sm text-gray-600">Total: {total}</p>
+                    <p className="text-sm text-gray-600">
+                        Showing: {filteredTotal} / {total} sketches
+                    </p>
                 </div>
                 <div className="flex gap-2">
                     <button className="rounded bg-gray-100 px-3 py-2 text-sm hover:bg-gray-200" onClick={refresh}>
@@ -337,6 +372,25 @@ function AdminApp() {
                 </div>
             </header>
 
+            {/* Week Filter Dropdown */}
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Filter by Week:
+                </label>
+                <select
+                    className="rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={selectedWeek}
+                    onChange={(e) => setSelectedWeek(e.target.value)}
+                >
+                    <option value="all">All Weeks ({total})</option>
+                    {folders.map((folder) => (
+                        <option key={folder.id} value={folder.id}>
+                            {folder.name} ({items.filter(s => s.week === folder.id).length})
+                        </option>
+                    ))}
+                </select>
+            </div>
+
             {loading && <div className="rounded border border-gray-200 bg-white p-4">Loading…</div>}
             {error && <div className="rounded border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
 
@@ -345,18 +399,18 @@ function AdminApp() {
                     <table className="min-w-full text-left text-sm">
                         <thead className="bg-gray-50 text-gray-700">
                             <tr>
-                                <th className="px-4 py-2 font-medium">Title</th>
                                 <th className="px-4 py-2 font-medium">Author</th>
+                                <th className="px-4 py-2 font-medium">Title</th>
                                 <th className="px-4 py-2 font-medium">URL</th>
                                 <th className="px-4 py-2 font-medium">Size</th>
                                 <th className="px-4 py-2 font-medium">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {items.map((s) => (
+                            {filteredItems.map((s) => (
                                 <tr key={s.slug} className="border-t">
-                                    <td className="px-4 py-2">{s.title}</td>
                                     <td className="px-4 py-2">{s.author}</td>
+                                    <td className="px-4 py-2">{s.title}</td>
                                     <td className="px-4 py-2">
                                         <a className="text-blue-600 hover:underline" href={s.url} target="_blank" rel="noreferrer">
                                             link
@@ -378,7 +432,12 @@ function AdminApp() {
                 </div>
             )}
 
-            <AddSketchDialog open={addOpen} onClose={() => setAddOpen(false)} onAdded={() => refresh()} />
+            <AddSketchDialog
+                open={addOpen}
+                onClose={() => setAddOpen(false)}
+                onAdded={() => refresh()}
+                selectedWeek={selectedWeek}
+            />
             <EditSketchDialog open={!!toEdit} onClose={() => setToEdit(null)} sketch={toEdit} onSaved={() => refresh()} />
             <ConfirmDialog
                 open={!!toDelete}

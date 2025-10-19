@@ -1,6 +1,12 @@
 # Creative Coding Class Showcase
 
-A gallery for p5.js sketches built with vanilla JavaScript, custom web components, and Vite.
+A gallery for p5.js sketches built with vanilla JavaScript, custom web components, and Vite. Built for my Creative Coding class students to showcase their p5.js projects. Users can view sketches in a responsive layout, and an admin panel allows for easy management of the sketches using the links of their p5js editor or openProcessing. 
+
+## How it works
+- Copy the browser link of your p5.js sketch from the p5.js web editor or openProcessing.
+- Go to the admin panel (http://localhost:3000/admin.html) and log in with the admin credentials (.env file).
+- Use the "Add Sketch" form to paste your sketch link, provide a title and description, canvas size and submit.
+- The sketch will be added to the gallery and can be viewed by all users.
 
 ## Tech Stack
 
@@ -86,18 +92,3 @@ This project is configured for Railway deployment with automatic builds.
 ### After deployment:
 - Gallery: `https://your-app.railway.app/`
 - Admin Panel: `https://your-app.railway.app/admin.html`
-
-## Notes
-
-- Admin/API auth (optional): set env vars `ADMIN_USER` and `ADMIN_PASS` to enable HTTP Basic Auth protecting `/admin.html`, `/admin-dist/*` and `/api/*`
-	```sh
-	ADMIN_USER=admin ADMIN_PASS=secret pnpm start
-	# or for dev:
-	ADMIN_USER=admin ADMIN_PASS=secret pnpm dev
-	```
-- Extra protections when auth is enabled:
-	- Rate limiting on protected endpoints (default: 200 requests / 10 minutes per IP)
-	- Temporary lockout after 8 failed credential attempts (15 minutes)
-- The gallery uses custom web components: `<custom-app>`, `<main-nav>`, `<sketch-display>`, `<p5-embed>`, `<sketch-info>`
-- Sketches are embedded via iframes from p5.js editor
-- Hash-based routing for navigating between sketches

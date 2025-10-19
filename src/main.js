@@ -20,19 +20,53 @@ class App extends HTMLElement {
     }
 
     render() {
-        // handle hash "routes"
+        // Parse hash for week and sketch: #week2 or #week2/sketch-slug
         const rawHash = window.location.hash.substring(1);
-        let sketchId = rawHash ? decodeURIComponent(rawHash) : "";
-        if (sketchId === "") {
-            let randomIndex = Math.floor(Math.random() * Config.sketches.length);
-            window.location.hash = encodeURIComponent(Config.sketches[randomIndex].slug); // default
-        }
-        const sketchInfo = Config.sketches.find((s) => s.slug === sketchId);
+        const parts = rawHash.split("/");
+        let weekId = parts[0] ? decodeURIComponent(parts[0]) : "";
+        let sketchSlug = parts[1] ? decodeURIComponent(parts[1]) : "";
 
-        // Fallback if slug not found (e.g., encoded unicode differences)
+        // If no week specified, redirect to default week
+        if (!weekId) {
+            const defaultFolder = Config.folders.find((f) => f.isDefault) || Config.folders[0];
+            if (defaultFolder) {
+                window.location.hash = defaultFolder.id;
+                return;
+            }
+        }
+
+        // Validate week exists
+        const currentFolder = Config.folders.find((f) => f.id === weekId);
+        if (!currentFolder) {
+            // Invalid week, redirect to default
+            const defaultFolder = Config.folders.find((f) => f.isDefault) || Config.folders[0];
+            if (defaultFolder) {
+                window.location.hash = defaultFolder.id;
+                return;
+            }
+        }
+
+        // Filter sketches for current week
+        const weekSketches = Config.sketches.filter((s) => s.week === weekId);
+
+        // If no sketch specified, pick first one in this week
+        if (!sketchSlug && weekSketches.length > 0) {
+            window.location.hash = `${weekId}/${encodeURIComponent(weekSketches[0].slug)}`;
+            return;
+        }
+
+        // Handle empty week
+        if (weekSketches.length === 0) {
+            this.renderEmptyWeek(weekId, currentFolder);
+            return;
+        }
+
+        // Find the sketch
+        const sketchInfo = weekSketches.find((s) => s.slug === sketchSlug);
+
+        // Fallback if sketch not found in this week
         if (!sketchInfo) {
-            const fallback = Config.sketches[0];
-            window.location.hash = encodeURIComponent(fallback.slug);
+            window.location.hash = `${weekId}/${encodeURIComponent(weekSketches[0].slug)}`;
             return;
         }
 
@@ -99,16 +133,36 @@ class App extends HTMLElement {
         }
 
         // build nave
-        let sketchesMenu = Config.sketches
+        let sketchesMenu = weekSketches
             .map((s) => {
                 return /*html*/ `
         <li>
-          <a class="${s.slug === sketchId ? "active" : ""}" href="#${encodeURIComponent(s.slug)}">${s.title}</a>
+          <a class="${s.slug === sketchSlug ? "active" : ""}" href="#${weekId}/${encodeURIComponent(s.slug)}">${
+                    s.title
+                }</a>
           by ${s.author}
         </li>
       `;
             })
             .join("");
+
+        // Build week selector dropdown
+        let weekSelector = /*html*/ `
+      <div class="week-selector">
+        <label for="week-select">Choose The Topic</label>
+        <select id="week-select" onchange="window.location.hash = this.value">
+          ${Config.folders
+              .map(
+                  (folder) => /*html*/ `
+            <option value="${folder.id}" ${folder.id === weekId ? "selected" : ""}>
+              ${folder.name}
+            </option>
+          `
+              )
+              .join("")}
+        </select>
+      </div>
+    `;
 
         // Determine CSS class based on URL
         const isOpenProcessing = sketchInfo.url.includes("openprocessing.org");
@@ -123,6 +177,7 @@ class App extends HTMLElement {
         <section>
           <h1>Creative Coding Class Showcase</h1>
           <small>By students at the Özyeğin University, Communication Design Department, Fall 2025.</small>
+          ${weekSelector}
           <nav>
             <ul>
               ${sketchesMenu}
@@ -162,6 +217,74 @@ class App extends HTMLElement {
                 this.querySelector("p5-embed").classList.add("loaded");
             }, 1200);
         };
+
+        // remove init class after delay
+        setTimeout(() => {
+            this.querySelector("main-nav").classList.remove("init");
+        }, 500);
+
+        // add click event listener to menu icon
+        const menuIcon = this.querySelector("menu-icon");
+        const mainNav = this.querySelector("main-nav");
+
+        menuIcon.addEventListener("click", (e) => {
+            e.preventDefault();
+            mainNav.classList.toggle("open");
+        });
+
+        // close menu when clicking on sketch-display
+        const sketchDisplay = this.querySelector("sketch-display");
+        sketchDisplay.addEventListener("click", () => {
+            mainNav.classList.remove("open");
+        });
+    }
+
+    renderEmptyWeek(weekId, currentFolder) {
+        // Build week selector dropdown
+        let weekSelector = /*html*/ `
+      <div class="week-selector">
+        <label for="week-select">Week:</label>
+        <select id="week-select" onchange="window.location.hash = this.value">
+          ${Config.folders
+              .map(
+                  (folder) => /*html*/ `
+            <option value="${folder.id}" ${folder.id === weekId ? "selected" : ""}>
+              ${folder.name}
+            </option>
+          `
+              )
+              .join("")}
+        </select>
+      </div>
+    `;
+
+        let output = /*html*/ `
+      <main-nav class="init">
+        <menu-icon></menu-icon>
+        <menu-attribution><b>${currentFolder.name}</b></menu-attribution>
+        <section>
+          <h1>Creative Coding Class Showcase</h1>
+          <small>By students at the Özyeğin University, Communication Design Department, Fall 2025.</small>
+          ${weekSelector}
+          <nav>
+            <div class="empty-week-message">
+              <p>No sketches yet for ${currentFolder.name}.</p>
+              <p>Check back soon!</p>
+            </div>
+          </nav>
+        </section>
+      </main-nav>
+      <sketch-display>
+        <div class="empty-week-display">
+          <h2>No sketches available</h2>
+          <p>This week doesn't have any sketches yet.</p>
+          <p>Students can upload their work through the admin panel.</p>
+        </div>
+      </sketch-display>
+      <style>${this.css()}</style>
+    `;
+
+        this.innerHTML = output;
 
         // remove init class after delay
         setTimeout(() => {

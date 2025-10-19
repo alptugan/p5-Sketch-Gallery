@@ -1,5 +1,5 @@
 :root {
-    --pink: #ed225d;
+    --pink: #f2f2f2bf;
     --near-black: #111;
     --dark-gray: #333;
     --light-gray: #666;
@@ -8,6 +8,7 @@
     --anim-ui: all 0.6s ease-in-out;
     --bounce-curve: cubic-bezier(0.175, 0.885, 0.32, 1.275);
     --menu-width: 6rem;
+    --selected-sketch: rgba(235, 35, 94, 0.9);
 }
 
 @font-face {
@@ -24,7 +25,8 @@
 
 html,
 body {
-    background-color: var(--pink);
+    /*background-color: var(--pink);*/
+    background-image: url("/images/old_wall.png");
     color: var(--near-black);
     padding: 0;
     margin: 0;
@@ -38,7 +40,7 @@ a,
 a:visited,
 a:hover,
 a:active {
-    color: var(--pink);
+    color: var(--near-black);
     text-decoration: none;
     font-weight: bold;
     text-decoration: none;
@@ -153,7 +155,7 @@ main-nav {
 
     a.active {
         padding: 0.5rem;
-        background-color: var(--pink);
+        background-color: var(--selected-sketch);
         color: var(--off-white);
         text-decoration: none;
         /* border-radius: 10px; */
@@ -198,8 +200,89 @@ sketch-display {
     transition: var(--anim-ui);
 }
 
-main-nav.open ~ sketch-display {
-    /*box-shadow: inset 0 0 0 100vmax rgba(17, 17, 17, 0.3);*/
+/* Week Selector Styles */
+.week-selector {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background-color: var(--selected-sketch);
+    border-radius: 8px;
+    border: 2px solid var(--pink);
+}
+
+.week-selector label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: var(--med-gray);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.week-selector select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 2px solid var(--dark-gray);
+    border-radius: 4px;
+    background-color: var(--white);
+    color: var(--near-black);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.week-selector select:hover {
+    border-color: var(--pink);
+}
+
+.week-selector select:focus {
+    outline: none;
+    border-color: var(--pink);
+    box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.2);
+}
+
+/* Empty Week Message */
+.empty-week-message {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--dark-gray);
+}
+
+.empty-week-message p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.empty-week-message p:first-child {
+    font-weight: bold;
+    font-size: 1.3rem;
+    color: var(--near-black);
+}
+
+.empty-week-display {
+    text-align: center;
+    padding: 4rem 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.empty-week-display h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--near-black);
+}
+
+.empty-week-display p {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: var(--dark-gray);
+    margin: 0.75rem 0;
+}
+
+.empty-week-display p:last-child {
+    font-size: 1rem;
+    color: var(--med-gray);
+    margin-top: 2rem;
 }
 
 @keyframes animated-stripes {
@@ -240,8 +323,8 @@ p5-embed {
     animation: animated-stripes 10s linear infinite;
 
     /* hide background & iframe anti-aliased artifacts */
-    box-shadow: inset 0 0 0 2px var(--pink), inset 0 0 0 1px var(--pink);
-    outline: 2px solid var(--pink);
+    box-shadow: inset 0 0 0 1px var(--near-black), inset 0 0 0 1px var(--near-black), 15px 10px 18px rgba(0, 0, 0, 0.8);
+    outline: 10px solid rgb(28, 0, 12);
 
     loading-message {
         position: absolute;
@@ -278,7 +361,7 @@ p5-embed {
     loading-message .load {
         width: 4px;
         height: 3px;
-        background-color: var(--pink);
+        background-color: var(--selected-sketch);
         animation: move_5011 1s infinite;
         border-radius: 5px;
         margin: 0.1em;
@@ -313,7 +396,7 @@ p5-embed {
 
 /* OpenProcessing specific iframe styling */
 p5-embed.openprocessing iframe {
-    margin-top: -50px;
+    margin-top: -51px;
 }
 
 /* shadow overlay on top of  */
@@ -324,66 +407,6 @@ p5-embed::after {
     left: 0;
     width: 100%;
     background-color: var(--near-black);
-    opacity: 0.1;
+    opacity: 0.8;
     pointer-events: none;
-}
-
-sketch-info {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    z-index: 3;
-
-    article {
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        width: 50%;
-        background-color: var(--white);
-        padding: 4rem 4rem 8rem;
-        transform: translateX(100%);
-        transition: var(--anim-ui);
-        opacity: 0.9;
-
-        .byline {
-            margin-bottom: 1rem;
-        }
-    }
-
-    button {
-        position: absolute;
-        z-index: 9;
-        bottom: 2rem;
-        right: 2rem;
-        background: transparent;
-        border: none;
-        outline: none;
-        width: 4rem;
-        height: 4rem;
-        font-size: 3rem;
-        line-height: 3rem;
-        padding: 0;
-        margin: 0;
-        cursor: help;
-        color: var(--dark-gray);
-        border-radius: 50%;
-        border: 0.2rem solid var(--dark-gray);
-        background-color: var(--off-white);
-        transform: scale(0.8);
-        transition: var(--anim-ui);
-        transition-timing-function: var(--bounce-curve);
-        transition-duration: 0.4s;
-    }
-
-    button:hover {
-        transform: scale(1);
-        color: var(--dark-gray);
-        border: 0.4rem solid var(--dark-gray);
-        opacity: 0.2;
-    }
-    button:hover + article {
-        transform: translateX(0);
-        box-shadow: 0 0 100px rgba(0, 0, 0, 1);
-    }
 }

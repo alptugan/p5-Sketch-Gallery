@@ -1,0 +1,17 @@
+[
+  {
+    "id": "week1",
+    "name": "Week 1 - Introduction",
+    "isDefault": false
+  },
+  {
+    "id": "week2",
+    "name": "Week 2 - Abstraction",
+    "isDefault": false
+  },
+  {
+    "id": "week3",
+    "name": "Week 3 - Computational Thinking",
+    "isDefault": true
+  }
+]
