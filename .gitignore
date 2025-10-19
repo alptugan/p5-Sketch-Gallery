@@ -5,3 +5,6 @@ TODO_.md
 package-lock.json
 admin-dist
 .env
+
+# Generated/built CSS files
+src/admin.css

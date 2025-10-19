@@ -1,44 +1,12 @@
-// import css during dev for vite reloading
-// import "./reset.css";
-// import "./styles.css";
+import Config from "./config.js";
 
-import config from "./config.js";
-const sketches = Array.isArray(config?.sketches) ? config.sketches : [];
-
-function getSlugFromHash() {
-    return decodeURIComponent(location.hash.replace(/^#/, "") || "");
-}
-
-function setHashIfValid(slug) {
-    if (slug) history.replaceState(null, "", `#${encodeURIComponent(slug)}`);
-}
-
-function getDefaultSlug() {
-    return sketches[0]?.slug || null;
-}
-
-class AppRoot extends HTMLElement {
+class App extends HTMLElement {
     connectedCallback() {
-        let slug = getSlugFromHash();
-
-        // If missing or not found, use default without writing "#undefined"
-        if (!slug || !sketches.some((s) => s.slug === slug)) {
-            slug = getDefaultSlug();
-            setHashIfValid(slug);
-        }
-
-        this.render(slug);
-        window.addEventListener("hashchange", () => {
-            const next = getSlugFromHash();
-            if (next && sketches.some((s) => s.slug === next)) {
-                this.render(next);
-            } else {
-                const fallback = getDefaultSlug();
-                setHashIfValid(fallback);
-                this.render(fallback);
-            }
-        });
+        requestAnimationFrame(() => this.render()); // solves circular import race condition
+        addEventListener("hashchange", (event) => window.location.reload());
     }
+
+    disconnectedCallback() {}
 
     css() {
         return /*css*/ `
@@ -51,15 +19,22 @@ class AppRoot extends HTMLElement {
     `;
     }
 
-    render(slug) {
-        // If still no data, show empty state instead of crashing
-        if (!sketches.length) {
-            this.innerHTML = `<p>No sketches available.</p>`;
+    render() {
+        // handle hash "routes"
+        const rawHash = window.location.hash.substring(1);
+        let sketchId = rawHash ? decodeURIComponent(rawHash) : "";
+        if (sketchId === "") {
+            let randomIndex = Math.floor(Math.random() * Config.sketches.length);
+            window.location.hash = encodeURIComponent(Config.sketches[randomIndex].slug); // default
+        }
+        const sketchInfo = Config.sketches.find((s) => s.slug === sketchId);
+
+        // Fallback if slug not found (e.g., encoded unicode differences)
+        if (!sketchInfo) {
+            const fallback = Config.sketches[0];
+            window.location.hash = encodeURIComponent(fallback.slug);
             return;
         }
-
-        // find the sketch by slug and render it
-        const sketchInfo = sketches.find((s) => s.slug === slug) ?? sketches[0];
 
         // Ensure p5.js links use the "full" view instead of the editor
         function normalizeP5Url(rawUrl) {
@@ -124,13 +99,11 @@ class AppRoot extends HTMLElement {
         }
 
         // build nave
-        let sketchesMenu = sketches
+        let sketchesMenu = Config.sketches
             .map((s) => {
                 return /*html*/ `
         <li>
-                    <a class="${s.slug === sketchInfo.slug ? "active" : ""}" href="#${encodeURIComponent(s.slug)}">${
-                    s.title
-                }</a>
+          <a class="${s.slug === sketchId ? "active" : ""}" href="#${encodeURIComponent(s.slug)}">${s.title}</a>
           by ${s.author}
         </li>
       `;
@@ -211,6 +184,7 @@ class AppRoot extends HTMLElement {
         });
     }
 }
-customElements.define("custom-app", AppRoot);
 
-export default AppRoot;
+customElements.define("custom-app", App);
+
+export default App;
