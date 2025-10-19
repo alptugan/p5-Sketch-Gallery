@@ -11,6 +11,7 @@
         "dev:admin": "vite",
         "start": "node server.js",
         "postinstall": "node -e \"try{require('fs').mkdirSync('data',{recursive:true})}catch(e){}\"",
+        "build": "pnpm run build:admin && pnpm run build:config",
         "build:admin": "vite build",
         "build:config": "node scripts/generate-config.mjs",
         "vercel-build": "pnpm run build:admin && pnpm run build:config"

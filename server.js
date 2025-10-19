@@ -135,8 +135,6 @@ app.use(authGuard);
 const SHOULD_RATE_LIMIT = AUTH_ENABLED && process.env.NODE_ENV === "production";
 const noLimit = (req, res, next) => next();
 
-// Serve static files (frontend)
-app.use(express.static(__dirname));
 // Serve Vite build output for admin in production at /admin-dist
 const ADMIN_DIST_DIR = path.join(__dirname, "admin-dist");
 if (fs.existsSync(ADMIN_DIST_DIR)) {
@@ -161,6 +159,19 @@ if (fs.existsSync(ADMIN_DIST_DIR)) {
             </body></html>`);
     });
 }
+
+// Serve static files (frontend) - AFTER admin routes to avoid conflicts
+app.use(
+    express.static(__dirname, {
+        index: "index.html",
+        // Don't serve admin.html from root in production
+        setHeaders: (res, filePath) => {
+            if (filePath.endsWith("admin.html") && fs.existsSync(ADMIN_DIST_DIR)) {
+                res.status(404);
+            }
+        },
+    })
+);
 
 // Data file path
 const DATA_DIR = path.join(__dirname, "data");

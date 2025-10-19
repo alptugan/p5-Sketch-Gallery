@@ -58,3 +58,46 @@ A gallery for p5.js sketches built with vanilla JavaScript, custom web component
 - [`src/config.js`](src/config.js) - Generated sketch configuration (from backend)
 - [`server.js`](server.js) - Express backend with API endpoints
 - [`vite.config.js`](vite.config.js) - Vite configuration for admin panel
+
+## Deployment (Railway.app)
+
+This project is configured for Railway deployment with automatic builds.
+
+### Setup:
+
+1. **Connect your GitHub repository** to Railway
+2. **Set environment variables** (optional):
+   - `ADMIN_USER` - Username for admin authentication
+   - `ADMIN_PASS` - Password for admin authentication
+   - `PORT` - Auto-set by Railway (default: 3000)
+
+3. **Deploy settings**:
+   - Build Command: `pnpm install && pnpm build`
+   - Start Command: `pnpm start`
+   - The build process automatically:
+     - Builds the admin UI (`admin-dist/`)
+     - Generates `src/config.js` from `data/sketches.json`
+
+### Important files for deployment:
+- `railway.json` - Railway deployment configuration
+- `nixpacks.toml` - Build configuration (uses Node.js 20 + pnpm)
+- `.gitignore` - Excludes `admin-dist/` (generated during build)
+
+### After deployment:
+- Gallery: `https://your-app.railway.app/`
+- Admin Panel: `https://your-app.railway.app/admin.html`
+
+## Notes
+
+- Admin/API auth (optional): set env vars `ADMIN_USER` and `ADMIN_PASS` to enable HTTP Basic Auth protecting `/admin.html`, `/admin-dist/*` and `/api/*`
+	```sh
+	ADMIN_USER=admin ADMIN_PASS=secret pnpm start
+	# or for dev:
+	ADMIN_USER=admin ADMIN_PASS=secret pnpm dev
+	```
+- Extra protections when auth is enabled:
+	- Rate limiting on protected endpoints (default: 200 requests / 10 minutes per IP)
+	- Temporary lockout after 8 failed credential attempts (15 minutes)
+- The gallery uses custom web components: `<custom-app>`, `<main-nav>`, `<sketch-display>`, `<p5-embed>`, `<sketch-info>`
+- Sketches are embedded via iframes from p5.js editor
+- Hash-based routing for navigating between sketches
