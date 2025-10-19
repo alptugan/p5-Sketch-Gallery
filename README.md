@@ -1,9 +1,21 @@
-# Creative Coding Class Showcase
+# P5 Sketch Gallery
 
-A gallery for p5.js sketches built with vanilla JavaScript, custom web components, and Vite. Built for my Creative Coding class students to showcase their p5.js projects. Users can view sketches in a responsive layout, and an admin panel allows for easy management of the sketches using the links of their p5js editor or openProcessing. 
+A web application for p5.js sketches built with vanilla JavaScript, custom web components, and Vite. Built for my Creative Coding class students to showcase their p5.js projects. Users can view sketches in a responsive layout, and an admin panel allows for easy management of the sketches using the links of their p5js editor or openProcessing. 
+
+
+## Motivation
+In my Creative Coding course, students create weekly p5.js sketches as assignments. Reviewing each assignment one by one is time consuming and lacks a cohesive presentation. I could use Github Pages or similar services, but they require manual setup and lack an easy way for students to contribute their work.This gallery serves as a centralized platform for students to showcase their work, explore peers' creations, and manage their submissions through an intuitive admin panel.
+
+## Features
+- Weekly categorized sketches (`/super-admin.html`)
+- Responsive gallery layout displaying p5.js sketches
+- User panel for adding, editing, and removing sketches (Basic Auth protected `/admin.html`)
+- No extra setup. Just copy/paste the sketch link. Backend handles the rest.
+- 
+
 
 ## How it works
-- Copy the browser link of your p5.js sketch from the p5.js web editor or openProcessing.
+- Copy the browser address of a p5.js sketch from the p5.js web editor or openProcessing sites.
 - Go to the admin panel (http://localhost:3000/admin.html) and log in with the admin credentials (.env file).
 - Use the "Add Sketch" form to paste your sketch link, provide a title and description, canvas size and submit.
 - The sketch will be added to the gallery and can be viewed by all users.
@@ -35,7 +47,8 @@ A gallery for p5.js sketches built with vanilla JavaScript, custom web component
 - Open the gallery:
     - http://localhost:3000/
 
-## Admin panel (Headless UI)
+## Admin panels
+This section describes the admin panel for managing sketches. Students can use this panel to add, edit, or remove their sketches from the gallery.
 
 - URL: http://localhost:3000/admin.html
 - Features: add/remove/edit sketches; persists to [`data/sketches.json`](data/sketches.json); regenerates [`src/config.js`](src/config.js)
@@ -50,20 +63,12 @@ A gallery for p5.js sketches built with vanilla JavaScript, custom web component
 
 - Production build:
     ```sh
-    pnpm build:admin
+    pnpm build
     ```
     - Outputs to [`admin-dist/`](admin-dist/)
     - Start server normally: `pnpm start`
     - Express serves `/admin-dist` and routes `/admin.html` to the built admin
 
-## Project Structure
-
-- [`src/main.js`](src/main.js) - Main app component using Web Components
-- [`src/styles.css`](src/styles.css) - Custom CSS with animations and responsive layout
-- [`src/reset.css`](src/reset.css) - CSS reset for consistent styling
-- [`src/config.js`](src/config.js) - Generated sketch configuration (from backend)
-- [`server.js`](server.js) - Express backend with API endpoints
-- [`vite.config.js`](vite.config.js) - Vite configuration for admin panel
 
 ## Deployment (Railway.app)
 
@@ -92,3 +97,16 @@ This project is configured for Railway deployment with automatic builds.
 ### After deployment:
 - Gallery: `https://your-app.railway.app/`
 - Admin Panel: `https://your-app.railway.app/admin.html`
+
+
+## Todo
+- [ ] Implement user authentication panel for admin panel.
+- [ ] Create a database integration for storing sketches.
+- [ ] Add kiosk mode for public displays.
+- [ ] Add slideshow mode for gallery viewing.
+- [ ] Display description of sketches on frontend.
+- [ ] Add navigation to switch between sketches.
+
+
+## License
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
