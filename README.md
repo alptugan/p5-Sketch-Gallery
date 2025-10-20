@@ -77,12 +77,16 @@ This project is configured for Railway deployment with automatic builds.
 ### Setup:
 
 1. **Connect your GitHub repository** to Railway
-2. **Set environment variables** (optional):
+2. **Set environment variables** (required):
    - `ADMIN_USER` - Username for admin authentication
    - `ADMIN_PASS` - Password for admin authentication
+   - `SUPER_ADMIN_USER` - Username for super admin (folder management)
+   - `SUPER_ADMIN_PASS` - Password for super admin (folder management)
    - `PORT` - Auto-set by Railway (default: 3000)
+   - `NODE_ENV` - Set to `production` for production deployments
 
 3. **Deploy settings**:
+   - Builder: Dockerfile
    - Build Command: `pnpm install && pnpm build`
    - Start Command: `pnpm start`
    - The build process automatically:
@@ -91,12 +95,14 @@ This project is configured for Railway deployment with automatic builds.
 
 ### Important files for deployment:
 - `railway.json` - Railway deployment configuration
-- `nixpacks.toml` - Build configuration (uses Node.js 20 + pnpm)
+- `Dockerfile` - Docker build configuration (uses Node.js 20 + pnpm)
+- `.dockerignore` - Excludes unnecessary files from Docker build
 - `.gitignore` - Excludes `admin-dist/` (generated during build)
 
 ### After deployment:
-- Gallery: `https://your-app.railway.app/`
-- Admin Panel: `https://your-app.railway.app/admin.html`
+- Gallery: `https://your-app-name.up.railway.app/`
+- Admin Panel: `https://your-app-name.up.railway.app/admin.html`
+- Super Admin Panel: `https://your-app-name.up.railway.app/super-admin.html`
 
 
 ## Todo
